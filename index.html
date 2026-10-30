@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Reporte Diario</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f4f9;font-family:Arial,sans-serif;color:#202b3c}
+header{background:#174ea6;color:white;padding:24px 18px}
+header h1{margin:0;font-size:25px}
+header p{margin:8px 0 0;color:#dce8ff}
+main{padding:16px;max-width:650px;margin:auto}
+.card{background:white;padding:18px;border-radius:14px;margin-bottom:15px;box-shadow:0 2px 8px #00000010}
+h2{font-size:18px;margin-top:0;color:#174ea6}
+label{display:block;font-weight:bold;margin:13px 0 6px}
+input,textarea{width:100%;padding:12px;border:1px solid #ccd3df;border-radius:8px;font-size:16px}
+textarea{min-height:90px;resize:vertical}
+button{border:0;border-radius:9px;padding:14px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:12px;width:100%}
+.primary{background:#174ea6;color:white}
+.green{background:#168849;color:white}
+.gray{background:#e5eaf2;color:#24334b}
+#preview{display:none}
+.media img{max-width:100%;max-height:180px;margin:6px;border-radius:8px}
+@media print{
+body{background:white}
+header,.no-print{display:none!important}
+main{padding:0}
+.card{box-shadow:none;border:0}
+#preview{display:block!important}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>📋 Mi Reporte Diario</h1>
+<p>Control de actividades y trabajos realizados</p>
+</header>
+<main>
+<div class="card no-print">
+<h2>📝 Nuevo reporte</h2>
+<label>Fecha</label>
+<input type="date" id="fecha">
+<label>Nombre del trabajo</label>
+<input id="trabajo" placeholder="Ej. Mantenimiento">
+<label>Descripción de actividades</label>
+<textarea id="actividad" placeholder="Describe las actividades realizadas..."></textarea>
+<label>Hora de inicio</label>
+<input type="time" id="inicio">
+<label>Hora de término</label>
+<input type="time" id="fin">
+<label>Materiales utilizados</label>
+<textarea id="materiales" placeholder="Ej. Cemento, pintura, herramientas..."></textarea>
+<label>Fotografías y videos</label>
+<input type="file" id="archivos" accept="image/*,video/*" multiple>
+<div id="media" class="media"></div>
+<label>Ubicación</label>
+<input id="ubicacion" placeholder="Ubicación del trabajo">
+<button class="gray" onclick="obtenerUbicacion()">📍 Obtener ubicación GPS</button>
+<button class="primary" onclick="generar()">📄 Generar reporte</button>
+</div>
+
+<div class="card" id="preview">
+<h2>REPORTE DE ACTIVIDADES</h2>
+<div id="contenido"></div>
+<div id="fotos"></div>
+<div class="no-print">
+<button class="green" onclick="window.print()">📄 Guardar como PDF</button>
+<button class="primary" onclick="compartir()">📲 Compartir por WhatsApp</button>
+<button class="gray" onclick="nuevo()">Nuevo reporte</button>
+</div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$("fecha").value=new Date().toISOString().slice(0,10);
+
+function obtenerUbicacion(){
+if(!navigator.geolocation){
+alert("Tu navegador no permite obtener ubicación");
+return;
+}
+navigator.geolocation.getCurrentPosition(
+p=>{
+$("ubicacion").value=p.coords.latitude.toFixed(6)+", "+p.coords.longitude.toFixed(6);
+},
+()=>alert("No se pudo obtener la ubicación. Revisa los permisos GPS."),
+{enableHighAccuracy:true}
+);
+}
+
+$("archivos").addEventListener("change",()=>{
+$("media").innerHTML="";
+Array.from($("archivos").files).forEach(f=>{
+let url=URL.createObjectURL(f);
+if(f.type.startsWith("image/")){
+let img=document.createElement("img");
+img.src=url;
+$("media").appendChild(img);
+}else if(f.type.startsWith("video/")){
+let v=document.createElement("video");
+v.src=url;
+v.controls=true;
+v.style.width="100%";
+$("media").appendChild(v);
+}
+});
+});
+
+let texto="";
+
+function generar(){
+let trabajo=$("trabajo").value.trim();
+let actividad=$("actividad").value.trim();
+if(!trabajo||!actividad){
+alert("Escribe el nombre del trabajo y las actividades.");
+return;
+}
+let fecha=$("fecha").value;
+let inicio=$("inicio").value;
+let fin=$("fin").value;
+let materiales=$("materiales").value;
+let ubicacion=$("ubicacion").value;
+
+texto=`MI REPORTE DIARIO
+Fecha: ${fecha}
+Trabajo: ${trabajo}
+Hora de inicio: ${inicio}
+Hora de término: ${fin}
+Actividades: ${actividad}
+Materiales: ${materiales}
+Ubicación: ${ubicacion}`;
+
+$("contenido").innerHTML=`
+<p><b>Fecha:</b> ${fecha}</p>
+<p><b>Trabajo:</b> ${trabajo}</p>
+<p><b>Horario:</b> ${inicio} a ${fin}</p>
+<p><b>Actividades:</b><br>${actividad.replace(/\n/g,"<br>")}</p>
+<p><b>Materiales:</b><br>${materiales.replace(/\n/g,"<br>")}</p>
+<p><b>Ubicación:</b> ${ubicacion}</p>
+`;
+$("fotos").innerHTML="";
+Array.from($("archivos").files).forEach(f=>{
+if(f.type.startsWith("image/")){
+let img=document.createElement("img");
+img.src=URL.createObjectURL(f);
+img.style.maxWidth="100%";
+img.style.maxHeight="250px";
+img.style.margin="8px";
+$("fotos").appendChild(img);
+}
+});
+$("preview").style.display="block";
+$("preview").scrollIntoView({behavior:"smooth"});
+}
+
+function compartir(){
+if(!texto)return;
+window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
+}
+
+function nuevo(){
+$("trabajo").value="";
+$("actividad").value="";
+$("inicio").value="";
+$("fin").value="";
+$("materiales").value="";
+$("ubicacion").value="";
+$("archivos").value="";
+$("media").innerHTML="";
+$("preview").style.display="none";
+window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
