@@ -32,6 +32,18 @@ main{padding:0}
 }
 </style>
 </head>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#174ea6">
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+</script>
+
 <body>
 <header>
 <h1>📋 Mi Reporte Diario</h1>
